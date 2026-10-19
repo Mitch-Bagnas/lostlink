@@ -50,8 +50,15 @@ export const Auth: React.FC = () => {
       }
       navigate(redirectPath, { replace: true });
     } catch (err: any) {
-      setErrorMsg(err.message || 'Authentication failed. Please verify your credentials.');
-      showToast('error', err.message || 'Authentication error.');
+      if (err.data?.error === 'ACCOUNT_SUSPENDED') {
+        const reason = err.data.message || 'Your account has been suspended by an administrator.';
+        const suspensionAlert = `Account Suspended: ${reason}`;
+        setErrorMsg(suspensionAlert);
+        showToast('error', suspensionAlert);
+      } else {
+        setErrorMsg(err.message || 'Authentication failed. Please verify your credentials.');
+        showToast('error', err.message || 'Authentication error.');
+      }
     } finally {
       setIsLoading(false);
     }

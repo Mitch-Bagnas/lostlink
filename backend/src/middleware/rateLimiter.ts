@@ -27,3 +27,14 @@ export const notifyLimiter = rateLimit({
     error: 'Too many notifications submitted for this item. Please wait a few minutes before trying again.',
   },
 });
+
+// Rate limiter for admin panel routes
+export const adminLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 300, // Generous 300 requests per 15 minutes for legitimate admin tasks
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'Too many administrative requests from this IP. Please slow down.',
+  },
+});

@@ -12,6 +12,10 @@ export type ContactMethod = 'email' | 'email+phone';
 
 export type ItemStatus = 'safe' | 'lost';
 
+export type UserRole = 'user' | 'admin';
+
+export type UserStatus = 'active' | 'suspended';
+
 export interface User {
   id: string;
   name: string;
@@ -19,6 +23,12 @@ export interface User {
   password_hash: string;
   phone: string | null;
   is_premium: boolean;
+  role: UserRole;
+  status: UserStatus;
+  suspended_reason: string | null;
+  last_login_at: Date | null;
+  password_changed_at: Date;
+  must_change_password: boolean;
   created_at: Date;
 }
 
@@ -51,10 +61,35 @@ export interface Notification {
   read: boolean;
 }
 
+export interface AuditLog {
+  id: string;
+  admin_id: string | null;
+  admin_email: string;
+  action: string;
+  target_type: string;
+  target_id: string | null;
+  details: Record<string, any>;
+  created_at: Date;
+}
+
+export interface AdminStats {
+  totalUsers: number;
+  premiumUsers: number;
+  suspendedUsers: number;
+  totalItems: number;
+  lostItems: number;
+  notifications7d: number;
+  notifications30d: number;
+  signupsPerDay: Array<{ date: string; count: number }>;
+}
+
 export interface AuthUserPayload {
   id: string;
   email: string;
   is_premium: boolean;
+  role: UserRole;
+  status: UserStatus;
+  must_change_password: boolean;
 }
 
 export interface AuthenticatedRequest extends Request {

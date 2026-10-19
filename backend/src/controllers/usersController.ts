@@ -10,7 +10,13 @@ function toSafeUser(user: User): SafeUser {
     email: user.email,
     phone: user.phone,
     is_premium: user.is_premium,
+    role: user.role,
+    status: user.status,
+    suspended_reason: user.suspended_reason,
+    must_change_password: user.must_change_password,
+    last_login_at: user.last_login_at,
     created_at: user.created_at,
+    password_changed_at: user.password_changed_at,
   };
 }
 
@@ -86,7 +92,10 @@ export async function updatePassword(req: AuthenticatedRequest, res: Response): 
     const salt = await bcrypt.genSalt(10);
     const newHash = await bcrypt.hash(newPassword, salt);
 
-    await query('UPDATE users SET password_hash = $1 WHERE id = $2', [newHash, userId]);
+    await query(
+      'UPDATE users SET password_hash = $1, password_changed_at = NOW(), must_change_password = FALSE WHERE id = $2',
+      [newHash, userId]
+    );
 
     res.status(200).json({ success: true, message: 'Password updated successfully' });
   } catch (error) {

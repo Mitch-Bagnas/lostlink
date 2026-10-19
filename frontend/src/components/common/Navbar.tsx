@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from './Button';
-import { Shield, QrCode, PlusCircle, Crown, Settings, Menu, X, LogOut, LayoutDashboard } from 'lucide-react';
+import { Shield, QrCode, PlusCircle, Crown, Settings, Menu, X, LogOut, LayoutDashboard, ShieldCheck } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -90,6 +90,23 @@ export const Navbar: React.FC = () => {
                   <Settings className="w-4 h-4" />
                   <span>Settings</span>
                 </Link>
+
+                {user.role === 'admin' && (
+                  <Link
+                    to="/admin"
+                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-bold transition-all ${
+                      location.pathname.startsWith('/admin')
+                        ? 'bg-ink text-white ring-2 ring-sky'
+                        : 'text-sky bg-sky-light/50 hover:bg-sky-light hover:text-ink'
+                    }`}
+                  >
+                    <ShieldCheck className="w-4 h-4 text-sky" />
+                    <span>Admin</span>
+                    <span className="px-1.5 py-0.2 text-[9px] uppercase font-black rounded-full bg-sky text-white">
+                      PANEL
+                    </span>
+                  </Link>
+                )}
               </>
             ) : (
               <>
@@ -211,6 +228,17 @@ export const Navbar: React.FC = () => {
                 <Settings className="w-4 h-4 text-muted" />
                 Settings
               </Link>
+
+              {user.role === 'admin' && (
+                <Link
+                  to="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-bold text-sky bg-sky-light/40 hover:bg-sky-light"
+                >
+                  <ShieldCheck className="w-4 h-4 text-sky" />
+                  Admin Panel
+                </Link>
+              )}
 
               <button
                 onClick={() => {

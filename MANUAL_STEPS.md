@@ -64,15 +64,102 @@ Each entry provides:
 
 ---
 
-### Step 9: [VERIFICATION] Production Smoke Test Checklist
+### Step 9: [COMPLETED] Core Production Smoke Test Checklist
 - [x] 1. Landing page loads cleanly at 375px mobile and 1366px desktop.
 - [x] 2. Sign in with demo account at `/auth` succeeds.
 - [x] 3. Dashboard loads with seeded items ("University Student ID", "Blue Samsonite Backpack").
 - [x] 4. Click **Manage & QR** on an item to inspect QR code and test status toggle (Safe <-> Lost).
 - [x] 5. Public QR URL (`/found/<qr_id>`) verified live with HTTP 200 — zero owner info exposed.
 - [x] 6. Send test finder alert message ("Left at the court") from mobile phone scanner — verified working live with real-time UI notification update.
-- [ ] 7. Add a 3rd item via **Add Item** to fill remaining free slot.
-- [ ] 8. Attempt to add a 4th item to verify the 3-item free tier limit and modal upsell.
-- [ ] 9. Visit `/premium` and test the simulated upgrade flow.
-- [ ] 10. Click Log Out to verify cookie cleanup and redirect to landing/login.
 
+---
+
+### Step 10: [BLOCKING] Run Database Migration 002 (`migrations/002_admin.sql`)
+- **Why this is needed:** Adds the `role` (`'user'`, `'admin'`) and `status` (`'active'`, `'suspended'`) columns, session revocation tracking (`password_changed_at`), forced password update flag (`must_change_password`), and the `audit_logs` table with row-level security.
+- **Where to do it:** [Supabase SQL Editor](https://supabase.com/dashboard/project/nwmubhfpzbczviboolpl/sql/new)
+- **Exact SQL to paste:**
+  ```sql
+  -- LostLink Migration: 002_admin.sql
+  -- Description: Adds admin role, account suspension, audit logging, and session revocation columns.
+  -- Paste-ready for the Supabase SQL Editor. Fully idempotent.
+
+  -- 1. Create Enums if not exists
+  DO $$ BEGIN
+      CREATE TYPE user_role AS ENUM ('user', 'admin');
+  EXCEPTION
+      WHEN duplicate_object THEN NULL;
+  END $$;
+
+  DO $$ BEGIN
+      CREATE TYPE user_status AS ENUM ('active', 'suspended');
+  EXCEPTION
+      WHEN duplicate_object THEN NULL;
+  END $$;
+
+  -- 2. Alter Users Table
+  ALTER TABLE users 
+      ADD COLUMN IF NOT EXISTS role user_role NOT NULL DEFAULT 'user',
+      ADD COLUMN IF NOT EXISTS status user_status NOT NULL DEFAULT 'active',
+      ADD COLUMN IF NOT EXISTS suspended_reason TEXT NULL,
+      ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ NULL,
+      ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE;
+
+  -- 3. Create Audit Logs Table
+  CREATE TABLE IF NOT EXISTS audit_logs (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      admin_id UUID NULL REFERENCES users(id) ON DELETE SET NULL,
+      admin_email VARCHAR(255) NOT NULL,
+      action VARCHAR(100) NOT NULL,
+      target_type VARCHAR(50) NOT NULL,
+      target_id UUID NULL,
+      details JSONB NOT NULL DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+
+  -- 4. Create Indexes
+  CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs (created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_audit_logs_admin_id ON audit_logs (admin_id);
+  CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs (action);
+  CREATE INDEX IF NOT EXISTS idx_users_role ON users (role);
+  CREATE INDEX IF NOT EXISTS idx_users_status ON users (status);
+
+  -- 5. Enable Row Level Security on audit_logs (defense in depth, no public access)
+  ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+  ```
+- **What success looks like:**
+  Supabase displays green `Success. No rows returned.`
+- **What to send back if it fails:**
+  Copy and paste the exact error message from the Supabase results pane.
+
+---
+
+### Step 11: [BLOCKING] Provision Your First Administrator Account
+- **Why this is needed:** There is strictly **no public way** to become an administrator. Signup always produces a regular user. This CLI script securely inserts or promotes your admin account using bcrypt hashing.
+- **Where to do it:** PowerShell terminal inside `d:\LostLink\backend` (or tell me to run it for you once Step 10 is done).
+- **Exact command to run:**
+  ```powershell
+  cd d:\LostLink\backend
+  $env:ADMIN_NAME="Platform Administrator"
+  $env:ADMIN_EMAIL="admin@lostlink.ph"
+  $env:ADMIN_PASSWORD="AdminPassword123!"
+  npx tsx scripts/createAdmin.ts
+  Remove-Item Env:\ADMIN_NAME, Env:\ADMIN_EMAIL, Env:\ADMIN_PASSWORD
+  ```
+  *(You may customize `ADMIN_EMAIL` and `ADMIN_PASSWORD` to your own preference).*
+- **What success looks like:**
+  Terminal prints:
+  ```text
+  ✅ Administrator account successfully configured:
+  {
+    id: '...',
+    name: 'Platform Administrator',
+    email: 'admin@lostlink.ph',
+    role: 'admin',
+    status: 'active',
+    is_premium: true
+  }
+  🔒 IMPORTANT: Please remove ADMIN_PASSWORD from your environment or terminal history.
+  ```
+- **What to send back if it fails:**
+  Copy and paste the terminal error output.

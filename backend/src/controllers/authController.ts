@@ -32,7 +32,13 @@ function toSafeUser(user: User): SafeUser {
     email: user.email,
     phone: user.phone,
     is_premium: user.is_premium,
+    role: user.role,
+    status: user.status,
+    suspended_reason: user.suspended_reason,
+    must_change_password: user.must_change_password,
+    last_login_at: user.last_login_at,
     created_at: user.created_at,
+    password_changed_at: user.password_changed_at,
   };
 }
 
@@ -50,10 +56,11 @@ export async function signup(req: Request, res: Response): Promise<void> {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
+    // Signup ALWAYS assigns role 'user' and status 'active' - never accept role from client
     const insertResult = await query<User>(
-      `INSERT INTO users (name, email, password_hash, phone, is_premium)
-       VALUES ($1, $2, $3, $4, FALSE)
-       RETURNING id, name, email, password_hash, phone, is_premium, created_at`,
+      `INSERT INTO users (name, email, password_hash, phone, is_premium, role, status, must_change_password, password_changed_at)
+       VALUES ($1, $2, $3, $4, FALSE, 'user', 'active', FALSE, NOW())
+       RETURNING id, name, email, password_hash, phone, is_premium, role, status, suspended_reason, must_change_password, last_login_at, created_at, password_changed_at`,
       [name, email, passwordHash, phone || null]
     );
 
@@ -82,7 +89,10 @@ export async function login(req: Request, res: Response): Promise<void> {
 
   try {
     const result = await query<User>(
-      'SELECT id, name, email, password_hash, phone, is_premium, created_at FROM users WHERE email = $1 LIMIT 1',
+      `SELECT id, name, email, password_hash, phone, is_premium, role, status, suspended_reason, must_change_password, last_login_at, created_at, password_changed_at 
+       FROM users 
+       WHERE email = $1 
+       LIMIT 1`,
       [email]
     );
 
@@ -92,12 +102,25 @@ export async function login(req: Request, res: Response): Promise<void> {
     }
 
     const user = result.rows[0];
-    const passwordMatch = await bcrypt.compare(password, user.password_hash);
 
+    // Check if account has been suspended before verifying password
+    if (user.status === 'suspended') {
+      res.status(403).json({
+        error: 'ACCOUNT_SUSPENDED',
+        message: user.suspended_reason || 'Your account has been suspended by an administrator.',
+      });
+      return;
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password_hash);
     if (!passwordMatch) {
       res.status(401).json({ error: 'Invalid email or password.' });
       return;
     }
+
+    // Record last login timestamp
+    await query('UPDATE users SET last_login_at = NOW() WHERE id = $1', [user.id]);
+    user.last_login_at = new Date();
 
     const token = jwt.sign(
       { userId: user.id, email: user.email },
@@ -130,7 +153,10 @@ export async function getMe(req: AuthenticatedRequest, res: Response): Promise<v
 
   try {
     const result = await query<User>(
-      'SELECT id, name, email, phone, is_premium, created_at FROM users WHERE id = $1 LIMIT 1',
+      `SELECT id, name, email, phone, is_premium, role, status, suspended_reason, must_change_password, last_login_at, created_at, password_changed_at 
+       FROM users 
+       WHERE id = $1 
+       LIMIT 1`,
       [req.user.id]
     );
 

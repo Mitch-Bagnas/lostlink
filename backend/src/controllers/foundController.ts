@@ -47,7 +47,8 @@ export async function notifyOwner(req: Request, res: Response): Promise<void> {
         i.contact_method,
         u.email AS owner_email,
         u.name AS owner_name,
-        u.phone AS owner_phone
+        u.phone AS owner_phone,
+        u.status AS owner_status
       FROM items i
       JOIN users u ON i.owner_id = u.id
       WHERE i.qr_id = $1
@@ -68,17 +69,23 @@ export async function notifyOwner(req: Request, res: Response): Promise<void> {
       [itemData.item_id, message || null, finder_contact || null]
     );
 
-    // 3. Trigger email notification (and mock SMS if contact_method == 'email+phone')
-    await sendFoundNotificationEmail({
-      ownerEmail: itemData.owner_email,
-      ownerName: itemData.owner_name,
-      itemName: itemData.item_name,
-      itemCategory: itemData.item_category,
-      finderMessage: message,
-      finderContact: finder_contact,
-      hasPhoneAlert: itemData.contact_method === 'email+phone',
-      ownerPhone: itemData.owner_phone,
-    });
+    // 3. Trigger email notification (skip if owner account is suspended)
+    if (itemData.owner_status === 'suspended') {
+      console.log(
+        `[Found Notification] Owner of item "${itemData.item_name}" (${itemData.owner_email}) is suspended. Notification persisted to database, but email dispatch skipped.`
+      );
+    } else {
+      await sendFoundNotificationEmail({
+        ownerEmail: itemData.owner_email,
+        ownerName: itemData.owner_name,
+        itemName: itemData.item_name,
+        itemCategory: itemData.item_category,
+        finderMessage: message,
+        finderContact: finder_contact,
+        hasPhoneAlert: itemData.contact_method === 'email+phone',
+        ownerPhone: itemData.owner_phone,
+      });
+    }
 
     res.status(200).json({
       success: true,

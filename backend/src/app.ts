@@ -11,6 +11,7 @@ import usersRoutes from './routes/usersRoutes';
 import itemsRoutes from './routes/itemsRoutes';
 import notificationsRoutes from './routes/notificationsRoutes';
 import foundRoutes from './routes/foundRoutes';
+import adminRoutes from './routes/adminRoutes';
 
 export const app = express();
 
@@ -62,6 +63,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/items', itemsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/found', foundRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 Handler for undefined API routes
 app.use((req: Request, res: Response) => {

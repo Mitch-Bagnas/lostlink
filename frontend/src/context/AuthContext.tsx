@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { apiClient, ApiError } from '../api/client';
+import { apiClient } from '../api/client';
 import { User } from '../types';
 
 interface AuthContextType {
@@ -9,6 +9,7 @@ interface AuthContextType {
   signup: (name: string, email: string, password: string, phone?: string) => Promise<User>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   upgradeToPremium: (paymentMethod?: string) => Promise<void>;
   downgradeToFree: () => Promise<void>;
 }
@@ -74,6 +75,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     await fetchCurrentUser();
   };
 
+  const changePassword = async (currentPassword: string, newPassword: string): Promise<void> => {
+    await apiClient('/users/me/password', {
+      method: 'PATCH',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    if (user) {
+      setUser({ ...user, must_change_password: false });
+    }
+  };
+
   const upgradeToPremium = async (paymentMethod = 'gcash'): Promise<void> => {
     const data = await apiClient<{ user: User }>('/users/me/upgrade', {
       method: 'POST',
@@ -98,6 +109,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         signup,
         logout,
         refreshUser,
+        changePassword,
         upgradeToPremium,
         downgradeToFree,
       }}
