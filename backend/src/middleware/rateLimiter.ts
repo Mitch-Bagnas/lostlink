@@ -38,3 +38,15 @@ export const adminLimiter = rateLimit({
     error: 'Too many administrative requests from this IP. Please slow down.',
   },
 });
+
+// Rate limiter for forgot-password IP requests (5 per hour)
+export const forgotPasswordLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: 'If that email exists in our system, a password reset link has been sent.',
+  },
+});
+

@@ -14,6 +14,8 @@ export type UserRole = 'user' | 'admin';
 
 export type UserStatus = 'active' | 'suspended';
 
+export type AuthProvider = 'local' | 'google';
+
 export interface User {
   id: string;
   name: string;
@@ -25,6 +27,9 @@ export interface User {
   suspended_reason?: string | null;
   must_change_password?: boolean;
   last_login_at?: string | null;
+  google_id?: string | null;
+  auth_provider?: AuthProvider;
+  has_password?: boolean;
   created_at: string;
 }
 

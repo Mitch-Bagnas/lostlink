@@ -139,3 +139,93 @@ export async function sendFoundNotificationEmail(params: NotifyOwnerEmailParams)
     return true;
   }
 }
+
+export interface PasswordResetEmailParams {
+  toEmail: string;
+  userName?: string | null;
+  resetUrl: string;
+}
+
+/**
+ * Sends a password reset email via Resend with a secure reset link.
+ * Falls back to console in development if RESEND_API_KEY is not configured.
+ * Never logs raw tokens in production.
+ */
+export async function sendPasswordResetEmail(params: PasswordResetEmailParams): Promise<boolean> {
+  const { toEmail, userName, resetUrl } = params;
+  const escapedName = escapeHtml(userName || 'Valued User');
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Reset your LostLink password</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F7FAFC; margin: 0; padding: 24px; color: #0A2540; }
+    .card { background-color: #ffffff; max-width: 580px; margin: 0 auto; border-radius: 16px; border: 1px solid #E2E8F0; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+    .badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; background-color: #00A8E8; color: #ffffff; text-transform: uppercase; letter-spacing: 0.05em; }
+    .header { margin-top: 16px; font-size: 22px; font-weight: 700; color: #0A2540; }
+    .button { display: inline-block; background-color: #00A8E8; color: #ffffff !important; padding: 14px 28px; border-radius: 9999px; font-size: 15px; font-weight: 600; text-decoration: none; margin: 24px 0; }
+    .note { background-color: #F7FAFC; border-left: 4px solid #00A8E8; padding: 14px; border-radius: 8px; margin: 18px 0; font-size: 13px; color: #5B6B7C; }
+    .footer { margin-top: 24px; font-size: 13px; color: #5B6B7C; border-top: 1px solid #E2E8F0; padding-top: 16px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <span class="badge">Security Notice</span>
+    <h1 class="header">Reset your password</h1>
+    <p>Hi ${escapedName},</p>
+    <p>We received a request to reset your LostLink account password. Click the button below to choose a new password:</p>
+    
+    <div style="text-align: center;">
+      <a href="${resetUrl}" class="button">Reset Password</a>
+    </div>
+
+    <div class="note">
+      ⏱️ This link is single-use and will expire in <strong>30 minutes</strong>.<br/>
+      If you did not request a password reset, you can safely ignore this email; your account remains secure.
+    </div>
+
+    <p style="font-size: 12px; color: #5B6B7C; word-break: break-all;">
+      Button not working? Copy and paste this link into your browser:<br/>
+      <a href="${resetUrl}" style="color: #00A8E8;">${resetUrl}</a>
+    </p>
+
+    <div class="footer">
+      LostLink — Recover what matters, privately.
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  const textContent = `Hi ${userName || 'there'},\n\nWe received a request to reset your LostLink password. Open this link to set a new password:\n\n${resetUrl}\n\nThis link is single-use and expires in 30 minutes. If you did not request this, you can safely ignore this message.`;
+
+  if (resend) {
+    try {
+      const response = await resend.emails.send({
+        from: env.EMAIL_FROM,
+        to: toEmail,
+        subject: '🔒 LostLink: Reset your password',
+        html: htmlContent,
+        text: textContent,
+      });
+      console.log(`✉️ Password reset email sent via Resend to ${toEmail}. ID:`, response.data?.id);
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to send password reset email via Resend:', error);
+      return false;
+    }
+  } else {
+    if (env.NODE_ENV !== 'production') {
+      console.log('----------------------------------------------------');
+      console.log('📧 [DEV EMAIL - PASSWORD RESET SIMULATION]');
+      console.log(`To: ${toEmail}`);
+      console.log(`Subject: 🔒 LostLink: Reset your password`);
+      console.log(`Reset URL: ${resetUrl}`);
+      console.log('----------------------------------------------------');
+    }
+    return true;
+  }
+}

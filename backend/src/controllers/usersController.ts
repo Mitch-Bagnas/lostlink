@@ -17,6 +17,9 @@ function toSafeUser(user: User): SafeUser {
     last_login_at: user.last_login_at,
     created_at: user.created_at,
     password_changed_at: user.password_changed_at,
+    google_id: user.google_id || null,
+    auth_provider: user.auth_provider || 'local',
+    has_password: Boolean(user.password_hash),
   };
 }
 
@@ -83,10 +86,18 @@ export async function updatePassword(req: AuthenticatedRequest, res: Response): 
     }
 
     const user = result.rows[0];
-    const isCurrentValid = await bcrypt.compare(currentPassword, user.password_hash);
-    if (!isCurrentValid) {
-      res.status(400).json({ error: 'Current password is incorrect.' });
-      return;
+
+    // If account already has a password, verify currentPassword
+    if (user.password_hash !== null) {
+      if (!currentPassword) {
+        res.status(400).json({ error: 'Current password is required.' });
+        return;
+      }
+      const isCurrentValid = await bcrypt.compare(currentPassword, user.password_hash);
+      if (!isCurrentValid) {
+        res.status(400).json({ error: 'Current password is incorrect.' });
+        return;
+      }
     }
 
     const salt = await bcrypt.genSalt(10);

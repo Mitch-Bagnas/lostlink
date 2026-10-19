@@ -109,3 +109,128 @@ Each entry provides:
   2. Log in with `admin@lostlink.ph` and `admin123`.
   3. The **Admin PANEL** link will appear in the top navbar.
   4. Clicking it will open the full Admin Panel at `/admin`.
+
+---
+
+### Step 14: [ACTION REQUIRED] Configure Production Domain on Vercel (`lostlink.vercel.app`)
+- **Why this is needed:** Upgrades the production URL from `lostlink-app-gold.vercel.app` to the clean branded domain `lostlink.vercel.app`. All existing links to the old domain will permanently 308-redirect to the new domain preserving paths and query parameters.
+- **Where to do it:** [Vercel Dashboard](https://vercel.com/dashboard) -> Select your LostLink frontend project -> **Settings** -> **Domains**.
+- **Exact Actions:**
+  1. In the **Domain** input box, enter `lostlink.vercel.app` and click **Add**.
+  2. If `lostlink.vercel.app` is already taken by another account, enter `lostlink-ph.vercel.app` instead.
+  3. Keep the old domain `lostlink-app-gold.vercel.app` in your domains list — our `vercel.json` will automatically 308-redirect all incoming traffic from the old domain to the new primary domain.
+- **What success looks like:**
+  The new domain displays a green status badge (`Valid Configuration`). Visiting `https://lostlink.vercel.app` (or `lostlink-ph.vercel.app`) loads the LostLink landing page.
+
+---
+
+### Step 15: [ACTION REQUIRED] Create Google OAuth 2.0 Web Client Credentials
+- **Why this is needed:** Real Google Sign-In uses a server-side OAuth 2.0 authorization code flow with PKCE, requiring a registered Google Client ID and Client Secret to verify tokens securely.
+- **Where to do it:** [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+- **Exact Actions:**
+  1. **Select or Create Project:** Click the project dropdown at the top and select your project (or click **New Project** and name it `LostLink`).
+  2. **Configure OAuth Consent Screen (if not done yet):**
+     - Go to **APIs & Services** -> **OAuth consent screen**.
+     - Choose **External** -> click **Create**.
+     - **App Information:** App name: `LostLink`, User support email: your email, Developer contact email: your email. Click **Save and Continue**.
+     - **Scopes:** Click **Add or Remove Scopes**, check `.../auth/userinfo.email`, `.../auth/userinfo.profile`, and `openid`. Click **Update** -> **Save and Continue**.
+     - **Test Users (IMPORTANT):** While the app is in **Testing mode**, only accounts listed here can sign in. Click **Add Users**, type your personal Google email address (and any other test accounts), and click **Save and Continue**. *(Once you are ready for everyone to use it, you can click "Publish App" on this screen).*
+  3. **Create Credentials:**
+     - Go to **APIs & Services** -> **Credentials**.
+     - Click **+ CREATE CREDENTIALS** -> Select **OAuth client ID**.
+     - **Application type:** Select **Web application**.
+     - **Name:** `LostLink Web Client`.
+     - **Authorized JavaScript origins:**
+       ```text
+       https://lostlink.vercel.app
+       http://localhost:5173
+       ```
+       *(If you used `lostlink-ph.vercel.app`, enter `https://lostlink-ph.vercel.app` instead)*
+     - **Authorized redirect URIs:**
+       ```text
+       https://lostlink.vercel.app/api/auth/google/callback
+       http://localhost:5173/api/auth/google/callback
+       ```
+       *(If you used `lostlink-ph.vercel.app`, enter `https://lostlink-ph.vercel.app/api/auth/google/callback` instead)*
+     - Click **Create**.
+     - Copy the **Client ID** (ends with `.apps.googleusercontent.com`) and the **Client Secret**.
+
+---
+
+### Step 16: [ACTION REQUIRED] Update Render Environment Variables
+- **Why this is needed:** The backend needs the Google credentials to exchange authorization codes, and needs `FRONTEND_URL` updated so CORS and OAuth redirect cookies function correctly.
+- **Where to do it:** [Render Dashboard](https://dashboard.render.com) -> Select your Web Service (`lostlink-queh`) -> **Environment**.
+- **Exact Actions:**
+  Add or edit these three environment variables:
+  | Key | Value |
+  | :--- | :--- |
+  | `FRONTEND_URL` | `https://lostlink.vercel.app` *(or `https://lostlink-ph.vercel.app`)* |
+  | `GOOGLE_CLIENT_ID` | `<Your Google Client ID from Step 15>` |
+  | `GOOGLE_CLIENT_SECRET` | `<Your Google Client Secret from Step 15>` |
+- Click **Save Changes**. Render will automatically trigger a deployment.
+
+---
+
+### Step 17: [BLOCKING] Run Database Migration 003 on Supabase (`003_auth_upgrades.sql`)
+- **Why this is needed:** Adds support for password reset tokens (`password_reset_tokens` table with RLS), makes `password_hash` nullable for Google-only users, and adds `google_id` and `auth_provider`.
+- **Where to do it:** [Supabase Dashboard](https://supabase.com/dashboard) -> Select your Project -> **SQL Editor** -> **New query**.
+- **Paste-Ready SQL:**
+```sql
+-- LostLink Migration: 003_auth_upgrades.sql
+-- Description: Password reset tokens, Google OAuth support, and nullable password_hash.
+-- Paste-ready for the Supabase SQL Editor. Fully idempotent.
+
+-- 1. Create auth_provider enum if not exists
+DO $$ BEGIN
+    CREATE TYPE auth_provider_type AS ENUM ('local', 'google');
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
+
+-- 2. Alter Users Table
+-- Make password_hash nullable for Google-only accounts
+ALTER TABLE users 
+    ALTER COLUMN password_hash DROP NOT NULL;
+
+-- Add google_id and auth_provider columns
+ALTER TABLE users 
+    ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE NULL,
+    ADD COLUMN IF NOT EXISTS auth_provider auth_provider_type NOT NULL DEFAULT 'local';
+
+CREATE INDEX IF NOT EXISTS idx_users_google_id ON users (google_id);
+
+-- 3. Create Password Reset Tokens Table
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash TEXT NOT NULL UNIQUE,
+    expires_at TIMESTAMPTZ NOT NULL,
+    used_at TIMESTAMPTZ NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 4. Create Indexes
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id ON password_reset_tokens (user_id);
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token_hash ON password_reset_tokens (token_hash);
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_expires_at ON password_reset_tokens (expires_at);
+
+-- 5. Enable Row Level Security (defense-in-depth, no public access)
+ALTER TABLE password_reset_tokens ENABLE ROW LEVEL SECURITY;
+```
+- **What success looks like:**
+  The query executes with `Success. No rows returned`.
+  You can run this quick verification query to confirm the columns and table are active:
+  ```sql
+  SELECT column_name, data_type, is_nullable 
+  FROM information_schema.columns 
+  WHERE table_name = 'users' AND column_name IN ('password_hash', 'google_id', 'auth_provider');
+
+  SELECT table_name FROM information_schema.tables WHERE table_name = 'password_reset_tokens';
+  ```
+
+---
+
+### Important Deliverability & Security Notes
+- **Resend Free Tier Restriction:** Resend free-tier accounts will ONLY deliver emails to the email address registered to your Resend account until you verify a custom domain. When testing the Forgot Password flow, enter your own Resend account email address to receive the live reset link.
+- **Google OAuth Testing Mode:** In Testing mode, Google requires every tester account to be listed under **Test users** on the OAuth consent screen. Sign-ins from accounts not listed will receive a `403 Access Denied` from Google before redirecting to LostLink.
+

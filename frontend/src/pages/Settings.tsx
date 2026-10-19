@@ -163,23 +163,39 @@ export const Settings: React.FC = () => {
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-line shadow-soft space-y-6">
           <div className="flex items-center gap-2 pb-4 border-b border-line">
             <Lock className="w-5 h-5 text-sky" />
-            <h2 className="text-lg font-bold text-ink">Security & Password</h2>
+            <h2 className="text-lg font-bold text-ink">
+              {user?.has_password === false ? 'Set Account Password' : 'Security & Password'}
+            </h2>
           </div>
 
-          <form onSubmit={handleUpdatePassword} className="space-y-4 max-w-lg">
-            <div className="space-y-1">
-              <label className="block text-xs font-bold uppercase tracking-wider text-ink">
-                Current Password
-              </label>
-              <input
-                type="password"
-                required
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-4 py-2.5 rounded-2xl border border-line bg-paper text-sm text-ink focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky"
-              />
+          {user?.has_password === false && (
+            <div className="p-4 rounded-2xl bg-sky-light/40 border border-sky/20 text-xs text-ink space-y-1">
+              <p className="font-bold flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-sky" />
+                Google Sign-In Connected
+              </p>
+              <p className="text-muted leading-relaxed">
+                You currently log in using Google. Set a password below if you would also like to sign in directly with your email and password.
+              </p>
             </div>
+          )}
+
+          <form onSubmit={handleUpdatePassword} className="space-y-4 max-w-lg">
+            {user?.has_password !== false && (
+              <div className="space-y-1">
+                <label className="block text-xs font-bold uppercase tracking-wider text-ink">
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-line bg-paper text-sm text-ink focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky"
+                />
+              </div>
+            )}
 
             <div className="space-y-1">
               <label className="block text-xs font-bold uppercase tracking-wider text-ink">
@@ -198,12 +214,12 @@ export const Settings: React.FC = () => {
 
             <Button
               type="submit"
-              variant="secondary"
+              variant={user?.has_password === false ? 'primary' : 'secondary'}
               size="md"
               isLoading={isUpdatingPassword}
               className="mt-2"
             >
-              Update Password
+              {user?.has_password === false ? 'Set Account Password' : 'Update Password'}
             </Button>
           </form>
         </div>

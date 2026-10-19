@@ -11,6 +11,8 @@ import { ChangePasswordModal } from './components/common/ChangePasswordModal';
 
 import { Landing } from './pages/Landing';
 import { Auth } from './pages/Auth';
+import { ForgotPassword } from './pages/ForgotPassword';
+import { ResetPassword } from './pages/ResetPassword';
 import { Dashboard } from './pages/Dashboard';
 import { ItemNew } from './pages/ItemNew';
 import { ItemDetail } from './pages/ItemDetail';
@@ -40,6 +42,8 @@ export function App() {
                 {/* Public Routes */}
                 <Route path="/" element={<Landing />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/found/:qrId" element={<FoundPublic />} />
 
                 {/* User Protected Routes */}

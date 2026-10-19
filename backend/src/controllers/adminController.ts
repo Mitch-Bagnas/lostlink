@@ -23,6 +23,9 @@ function toSafeUser(user: any): SafeUser {
     last_login_at: user.last_login_at,
     created_at: user.created_at,
     password_changed_at: user.password_changed_at,
+    google_id: user.google_id || null,
+    auth_provider: user.auth_provider || 'local',
+    has_password: Boolean(user.password_hash),
   };
 }
 

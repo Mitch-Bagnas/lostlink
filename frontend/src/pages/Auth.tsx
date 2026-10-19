@@ -22,6 +22,24 @@ export const Auth: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Handle URL errors (e.g. from Google OAuth callback or suspension redirect)
+  useEffect(() => {
+    const error = searchParams.get('error');
+    if (error === 'google_failed') {
+      const reason = searchParams.get('reason');
+      const msg = reason ? `Google sign-in failed (${reason}). Please try again.` : 'Google sign-in could not be completed. Please try again.';
+      setErrorMsg(msg);
+      showToast('error', msg);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (error === 'ACCOUNT_SUSPENDED') {
+      const reason = searchParams.get('reason') || 'Your account has been suspended by an administrator.';
+      const msg = `Account Suspended: ${decodeURIComponent(reason)}`;
+      setErrorMsg(msg);
+      showToast('error', msg);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [searchParams, showToast]);
+
   // If already logged in, navigate to redirect path
   useEffect(() => {
     if (user) {
@@ -55,6 +73,10 @@ export const Auth: React.FC = () => {
         const suspensionAlert = `Account Suspended: ${reason}`;
         setErrorMsg(suspensionAlert);
         showToast('error', suspensionAlert);
+      } else if (err.data?.error === 'GOOGLE_SIGNIN_REQUIRED') {
+        const hint = err.data.message || 'This account uses Google Sign-In. Please sign in with Google or use Forgot Password.';
+        setErrorMsg(hint);
+        showToast('info', hint);
       } else {
         setErrorMsg(err.message || 'Authentication failed. Please verify your credentials.');
         showToast('error', err.message || 'Authentication error.');
@@ -64,8 +86,8 @@ export const Auth: React.FC = () => {
     }
   };
 
-  const handleMockGoogle = () => {
-    showToast('info', 'Google OAuth integration ready. For this demo, please use email sign-in.');
+  const handleGoogleSignIn = () => {
+    window.location.href = '/api/auth/google';
   };
 
   const fillDemoAccount = (demoEmail: string) => {
@@ -100,13 +122,14 @@ export const Auth: React.FC = () => {
             onClick={() => {
               setActiveTab('login');
               setErrorMsg('');
-              setConfirmPassword('');
             }}
             className={`flex-1 py-2 text-xs font-bold rounded-full transition-all ${
-              activeTab === 'login' ? 'bg-ink text-white shadow-sm' : 'text-muted hover:text-ink'
+              activeTab === 'login'
+                ? 'bg-ink text-white shadow-soft'
+                : 'text-muted hover:text-ink'
             }`}
           >
-            Log In
+            Sign In
           </button>
           <button
             type="button"
@@ -115,19 +138,21 @@ export const Auth: React.FC = () => {
               setErrorMsg('');
             }}
             className={`flex-1 py-2 text-xs font-bold rounded-full transition-all ${
-              activeTab === 'signup' ? 'bg-ink text-white shadow-sm' : 'text-muted hover:text-ink'
+              activeTab === 'signup'
+                ? 'bg-ink text-white shadow-soft'
+                : 'text-muted hover:text-ink'
             }`}
           >
             Create Account
           </button>
         </div>
 
-        {/* Mock Google Button */}
+        {/* Real Google OAuth Button */}
         <div>
           <button
             type="button"
-            onClick={handleMockGoogle}
-            className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-full border border-line text-sm font-semibold text-ink hover:bg-paper transition-all focus:outline-none focus:ring-2 focus:ring-sky"
+            onClick={handleGoogleSignIn}
+            className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-full border border-line text-sm font-semibold text-ink hover:bg-paper transition-all focus:outline-none focus:ring-2 focus:ring-sky shadow-sm"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
               <path
@@ -160,7 +185,7 @@ export const Auth: React.FC = () => {
 
         {/* Error message */}
         {errorMsg && (
-          <div className="p-3 rounded-2xl bg-lost-light border border-lost/20 text-lost text-xs font-medium">
+          <div className="p-3.5 rounded-2xl bg-lost-light border border-lost/20 text-lost text-xs font-semibold leading-relaxed">
             {errorMsg}
           </div>
         )}
@@ -200,7 +225,17 @@ export const Auth: React.FC = () => {
           </div>
 
           <div className="space-y-1">
-            <label className="block text-xs font-bold text-ink">Password</label>
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-ink">Password</label>
+              {activeTab === 'login' && (
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-semibold text-sky hover:text-sky-dark hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              )}
+            </div>
             <div className="relative">
               <Lock className="w-4 h-4 text-muted absolute left-3.5 top-3" />
               <input
@@ -227,15 +262,13 @@ export const Auth: React.FC = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Re-enter your password"
-                  className={`w-full pl-10 pr-4 py-2.5 rounded-2xl border text-sm text-ink focus:bg-white focus:outline-none focus:ring-2 ${
-                    confirmPassword && confirmPassword !== password
-                      ? 'border-lost bg-lost-light/30 focus:ring-lost'
-                      : 'border-line bg-paper focus:ring-sky'
-                  }`}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-line bg-paper text-sm text-ink focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky"
                 />
               </div>
-              {confirmPassword && confirmPassword !== password && (
-                <p className="text-[11px] text-lost font-medium pl-1">Passwords do not match</p>
+              {confirmPassword && password !== confirmPassword && (
+                <p className="text-[11px] font-semibold text-lost mt-1">
+                  Passwords do not match. Please verify your typing.
+                </p>
               )}
             </div>
           )}
@@ -243,34 +276,34 @@ export const Auth: React.FC = () => {
           <Button
             type="submit"
             variant="primary"
-            size="lg"
             isLoading={isLoading}
-            className="w-full font-bold shadow-md mt-2"
+            className="w-full justify-center py-3 text-sm font-bold shadow-soft"
           >
-            {activeTab === 'login' ? 'Sign In' : 'Create Free Account'}
+            {activeTab === 'login' ? 'Sign In to Dashboard' : 'Complete Registration'}
             <ArrowRight className="w-4 h-4 ml-1.5" />
           </Button>
         </form>
 
-        {/* Demo Fast-Login helper for student evaluator */}
-        <div className="pt-4 border-t border-line text-center space-y-2">
-          <p className="text-[11px] font-bold text-muted uppercase tracking-wider">
-            Quick Demo Accounts (from seed.sql):
+        {/* Demo Fast-Login Pill Tray */}
+        <div className="pt-2 border-t border-line space-y-2">
+          <p className="text-[11px] font-bold text-muted flex items-center justify-center gap-1">
+            <Sparkles className="w-3.5 h-3.5 text-sky" />
+            Quick-fill demo credentials:
           </p>
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-2">
             <button
               type="button"
               onClick={() => fillDemoAccount('demo@lostlink.ph')}
-              className="px-2.5 py-1 rounded-full bg-paper border border-line text-[11px] font-medium text-ink hover:bg-sky-light hover:text-sky transition-colors"
+              className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-paper hover:bg-sky-light/40 hover:text-sky text-ink border border-line transition-all"
             >
-              Demo Free User (2 items)
+              Demo User (Free)
             </button>
             <button
               type="button"
               onClick={() => fillDemoAccount('pro@lostlink.ph')}
-              className="px-2.5 py-1 rounded-full bg-paper border border-line text-[11px] font-medium text-ink hover:bg-sky-light hover:text-sky transition-colors"
+              className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-paper hover:bg-amber-100 hover:text-amber-800 text-ink border border-line transition-all"
             >
-              Pro Power User (4 items)
+              Pro User (Premium)
             </button>
           </div>
         </div>

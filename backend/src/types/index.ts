@@ -16,11 +16,13 @@ export type UserRole = 'user' | 'admin';
 
 export type UserStatus = 'active' | 'suspended';
 
+export type AuthProvider = 'local' | 'google';
+
 export interface User {
   id: string;
   name: string;
   email: string;
-  password_hash: string;
+  password_hash: string | null;
   phone: string | null;
   is_premium: boolean;
   role: UserRole;
@@ -29,10 +31,12 @@ export interface User {
   last_login_at: Date | null;
   password_changed_at: Date;
   must_change_password: boolean;
+  google_id: string | null;
+  auth_provider: AuthProvider;
   created_at: Date;
 }
 
-export type SafeUser = Omit<User, 'password_hash'>;
+export type SafeUser = Omit<User, 'password_hash'> & { has_password: boolean };
 
 export interface Item {
   id: string;
