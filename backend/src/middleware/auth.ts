@@ -63,11 +63,10 @@ export async function requireAuth(
 
     // Check if JWT was issued before the last password change / admin reset
     if (decoded.iat && dbUser.password_changed_at) {
-      const tokenIssuedAtMs = decoded.iat * 1000;
-      // Allow 1000ms leeway for database vs system clock differences
-      const passwordChangedAtMs = new Date(dbUser.password_changed_at).getTime() - 1000;
+      const tokenIssuedAtSeconds = decoded.iat;
+      const passwordChangedAtSeconds = Math.floor(new Date(dbUser.password_changed_at).getTime() / 1000);
 
-      if (tokenIssuedAtMs < passwordChangedAtMs) {
+      if (tokenIssuedAtSeconds < passwordChangedAtSeconds) {
         res.status(401).json({
           error: 'SESSION_REVOKED',
           message: 'Your session has been invalidated because the password was changed. Please log in again.',

@@ -74,92 +74,25 @@ Each entry provides:
 
 ---
 
-### Step 10: [BLOCKING] Run Database Migration 002 (`migrations/002_admin.sql`)
-- **Why this is needed:** Adds the `role` (`'user'`, `'admin'`) and `status` (`'active'`, `'suspended'`) columns, session revocation tracking (`password_changed_at`), forced password update flag (`must_change_password`), and the `audit_logs` table with row-level security.
-- **Where to do it:** [Supabase SQL Editor](https://supabase.com/dashboard/project/nwmubhfpzbczviboolpl/sql/new)
-- **Exact SQL to paste:**
-  ```sql
-  -- LostLink Migration: 002_admin.sql
-  -- Description: Adds admin role, account suspension, audit logging, and session revocation columns.
-  -- Paste-ready for the Supabase SQL Editor. Fully idempotent.
-
-  -- 1. Create Enums if not exists
-  DO $$ BEGIN
-      CREATE TYPE user_role AS ENUM ('user', 'admin');
-  EXCEPTION
-      WHEN duplicate_object THEN NULL;
-  END $$;
-
-  DO $$ BEGIN
-      CREATE TYPE user_status AS ENUM ('active', 'suspended');
-  EXCEPTION
-      WHEN duplicate_object THEN NULL;
-  END $$;
-
-  -- 2. Alter Users Table
-  ALTER TABLE users 
-      ADD COLUMN IF NOT EXISTS role user_role NOT NULL DEFAULT 'user',
-      ADD COLUMN IF NOT EXISTS status user_status NOT NULL DEFAULT 'active',
-      ADD COLUMN IF NOT EXISTS suspended_reason TEXT NULL,
-      ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ NULL,
-      ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE;
-
-  -- 3. Create Audit Logs Table
-  CREATE TABLE IF NOT EXISTS audit_logs (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      admin_id UUID NULL REFERENCES users(id) ON DELETE SET NULL,
-      admin_email VARCHAR(255) NOT NULL,
-      action VARCHAR(100) NOT NULL,
-      target_type VARCHAR(50) NOT NULL,
-      target_id UUID NULL,
-      details JSONB NOT NULL DEFAULT '{}'::jsonb,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-  );
-
-  -- 4. Create Indexes
-  CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs (created_at DESC);
-  CREATE INDEX IF NOT EXISTS idx_audit_logs_admin_id ON audit_logs (admin_id);
-  CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs (action);
-  CREATE INDEX IF NOT EXISTS idx_users_role ON users (role);
-  CREATE INDEX IF NOT EXISTS idx_users_status ON users (status);
-
-  -- 5. Enable Row Level Security on audit_logs (defense in depth, no public access)
-  ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
-  ```
-- **What success looks like:**
-  Supabase displays green `Success. No rows returned.`
-- **What to send back if it fails:**
-  Copy and paste the exact error message from the Supabase results pane.
+### Step 10: [COMPLETED] Run Database Migration 002 (`migrations/002_admin.sql`)
+- **Status:** ✅ Executed and verified live on Supabase.
+- **Summary:** Added `role` and `status` enums, session revocation (`password_changed_at`), forced password update flag (`must_change_password`), `audit_logs` table with RLS, and indexes.
 
 ---
 
-### Step 11: [BLOCKING] Provision Your First Administrator Account
-- **Why this is needed:** There is strictly **no public way** to become an administrator. Signup always produces a regular user. This CLI script securely inserts or promotes your admin account using bcrypt hashing.
-- **Where to do it:** PowerShell terminal inside `d:\LostLink\backend` (or tell me to run it for you once Step 10 is done).
-- **Exact command to run:**
-  ```powershell
-  cd d:\LostLink\backend
-  $env:ADMIN_NAME="Platform Administrator"
-  $env:ADMIN_EMAIL="admin@lostlink.ph"
-  $env:ADMIN_PASSWORD="AdminPassword123!"
-  npx tsx scripts/createAdmin.ts
-  Remove-Item Env:\ADMIN_NAME, Env:\ADMIN_EMAIL, Env:\ADMIN_PASSWORD
-  ```
-  *(You may customize `ADMIN_EMAIL` and `ADMIN_PASSWORD` to your own preference).*
-- **What success looks like:**
-  Terminal prints:
-  ```text
-  ✅ Administrator account successfully configured:
-  {
-    id: '...',
-    name: 'Platform Administrator',
-    email: 'admin@lostlink.ph',
-    role: 'admin',
-    status: 'active',
-    is_premium: true
-  }
-  🔒 IMPORTANT: Please remove ADMIN_PASSWORD from your environment or terminal history.
-  ```
-- **What to send back if it fails:**
-  Copy and paste the terminal error output.
+### Step 11: [COMPLETED] Provision Your First Administrator Account
+- **Status:** ✅ Completed. Account `admin@lostlink.ph` provisioned with `role = 'admin'`, `status = 'active'`, `is_premium = true`.
+- **Note:** Ensure temporary passwords used in terminal history are cleared.
+
+---
+
+### Step 12: [COMPLETED] Admin Panel & Security Suite Verification (9/9 Checks Passed)
+- [x] 1. `createAdmin` executed, admin login succeeds, `/admin` loads overview metrics and 30-day velocity chart.
+- [x] 2. Regular user signup strictly rejects role tampering; all `/api/admin/*` endpoints strictly return 403 Forbidden to regular users.
+- [x] 3. Suspending a user immediately terminates their active session (`403 ACCOUNT_SUSPENDED`), login displays reason banner, and admin reactivation restores full access.
+- [x] 4. Free tier 3-item limit enforced (`403 FREE_TIER_LIMIT_REACHED`); admin grants premium; user can register 4th+ items.
+- [x] 5. Admin password reset generates a one-time temp password; immediately revokes old session (`401 SESSION_REVOKED`); old password rejected; temp password succeeds and prompts forced password change modal.
+- [x] 6. Safety guardrails block self-deletion (400), self-demotion (400), self-suspension (400), and direct deletion of admins without two-step demotion.
+- [x] 7. Cascade user deletion cleanly purges user, items, and finder notifications from the database.
+- [x] 8. Audit logging verified: every action tracked with `admin_email` snapshot and ZERO leaked passwords/secrets. Public `GET /api/found/:qrId` verified to leak ZERO owner data.
+- [x] 9. Production build `npm run build` succeeds on backend and frontend (0 errors). Full-page responsive screenshots captured at 375px and 1366px for `/admin`, `/admin/users`, and `/admin/users/:id`.

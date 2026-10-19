@@ -59,7 +59,7 @@ export async function signup(req: Request, res: Response): Promise<void> {
     // Signup ALWAYS assigns role 'user' and status 'active' - never accept role from client
     const insertResult = await query<User>(
       `INSERT INTO users (name, email, password_hash, phone, is_premium, role, status, must_change_password, password_changed_at)
-       VALUES ($1, $2, $3, $4, FALSE, 'user', 'active', FALSE, NOW())
+       VALUES ($1, $2, $3, $4, FALSE, 'user', 'active', FALSE, NOW() - INTERVAL '5 seconds')
        RETURNING id, name, email, password_hash, phone, is_premium, role, status, suspended_reason, must_change_password, last_login_at, created_at, password_changed_at`,
       [name, email, passwordHash, phone || null]
     );
