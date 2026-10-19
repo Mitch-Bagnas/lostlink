@@ -47,30 +47,8 @@ Each entry provides:
 
 ---
 
-### Step 7: [FINAL STEP] Connect Vercel & Render Environment Variables
-To connect the live frontend to the live backend:
-
-1. **In Render Dashboard ([dashboard.render.com](https://dashboard.render.com/)):**
-   - Click your `lostlink` Web Service $\rightarrow$ **Environment** tab.
-   - Update `FRONTEND_URL` to:
-     ```text
-     https://lostlink-app-gold.vercel.app
-     ```
-   - Click **Save Changes** (triggers a quick automatic restart).
-
-2. **In Vercel Dashboard ([vercel.com](https://vercel.com/)):**
-   - Click `lostlink-app` $\rightarrow$ **Settings** $\rightarrow$ **Environment Variables**.
-   - Edit `VITE_API_URL` (or add it if missing):
-     - **Key:** `VITE_API_URL`
-     - **Value:**
-       ```text
-       https://lostlink-queh.onrender.com/api
-       ```
-     - Make sure **Config** is selected (not Secret).
-     - Click **Save**.
-   - Go to the **Deployments** tab $\rightarrow$ click the **`...`** (three dots) on the top deployment $\rightarrow$ click **Redeploy**.
-
----
+### Step 7: [COMPLETED] Connect Vercel & Render Environment Variables
+- **Status:** Completed & Verified Live. Cross-domain authentication, cookie passing, and API calls between `lostlink-app-gold.vercel.app` and `lostlink-queh.onrender.com` are fully operational.
 
 ---
 
@@ -79,7 +57,7 @@ To connect the live frontend to the live backend:
 - **Important Resend Free-Tier Note:** Resend's free tier restricts sending to the single email address registered on your Resend account (or verified custom domain). If you test with demo accounts, send notifications to your own verified email.
 - **Where to do it:** [Resend Dashboard](https://resend.com/api-keys)
   1. Sign in and create an API key named `LostLink-Prod`.
-  2. In Render -> `lostlink-backend` -> Environment -> Set `RESEND_API_KEY` to `re_...`.
+  2. In Render -> `lostlink` -> Environment -> Set `RESEND_API_KEY` to `re_...`.
   3. Set `EMAIL_FROM` to `onboarding@resend.dev` (or your verified domain sender).
 - **What success looks like:**
   When `/api/found/:qrId/notify` is called, an email arrives in the owner's inbox with the subject: `🚨 LostLink Alert: Someone found your [Item Name]!`.
@@ -87,17 +65,14 @@ To connect the live frontend to the live backend:
 ---
 
 ### Step 9: [VERIFICATION] Production Smoke Test Checklist
-Open your live Vercel URL in an incognito window and verify:
-- [ ] 1. Landing page loads cleanly at 375px mobile and 1366px desktop.
-- [ ] 2. Create a new account at `/auth`.
-- [ ] 3. Dashboard loads with 0 items.
-- [ ] 4. Register Item 1 (Wallet), Item 2 (Bag), Item 3 (Gadget).
-- [ ] 5. Attempt to register Item 4 -> Verify the upgrade prompt modal opens and server rejects with 403.
-- [ ] 6. Mark Item 1 as "Lost".
-- [ ] 7. Copy the QR link (`/found/<qr_id>`) and open it in a separate private window.
-- [ ] 8. Verify the public page shows only Item Name, Category, and Status — no owner name, email, or phone.
-- [ ] 9. Type a finder message ("Found on MRT train 3") and submit "Notify Owner".
-- [ ] 10. Confirm notification is logged/received in owner dashboard.
-- [ ] 11. Navigate to `/premium` -> click "Upgrade" -> complete simulated payment.
-- [ ] 12. Register Item 4 now as Premium -> succeeds!
-- [ ] 13. Log out -> verify cookie cleared and protected routes redirect to `/auth`.
+- [x] 1. Landing page loads cleanly at 375px mobile and 1366px desktop.
+- [x] 2. Sign in with demo account at `/auth` succeeds.
+- [x] 3. Dashboard loads with seeded items ("University Student ID", "Blue Samsonite Backpack").
+- [ ] 4. Click **Manage & QR** on an item to inspect QR code and test status toggle (Safe <-> Lost).
+- [ ] 5. Click the public QR URL (`/found/<qr_id>`) in a private/incognito window to verify zero owner info is exposed.
+- [ ] 6. Send a test finder alert message ("Found near library") and verify it increments the notification count.
+- [ ] 7. Add a 3rd item via **Add Item**.
+- [ ] 8. Attempt to add a 4th item to verify the 3-item free tier limit and modal upsell.
+- [ ] 9. Visit `/premium` and test the simulated upgrade flow.
+- [ ] 10. Click Log Out to verify cookie cleanup and redirect to landing/login.
+
