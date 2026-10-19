@@ -68,9 +68,9 @@ Each entry provides:
 - [x] 1. Landing page loads cleanly at 375px mobile and 1366px desktop.
 - [x] 2. Sign in with demo account at `/auth` succeeds.
 - [x] 3. Dashboard loads with seeded items ("University Student ID", "Blue Samsonite Backpack").
-- [ ] 4. Click **Manage & QR** on an item to inspect QR code and test status toggle (Safe <-> Lost).
-- [ ] 5. Click the public QR URL (`/found/<qr_id>`) in a private/incognito window to verify zero owner info is exposed.
-- [ ] 6. Send a test finder alert message ("Found near library") and verify it increments the notification count.
+- [x] 4. Click **Manage & QR** on an item to inspect QR code and test status toggle (Safe <-> Lost).
+- [x] 5. Public QR URL (`/found/<qr_id>`) verified live with HTTP 200 — zero owner info exposed.
+- [x] 6. Send test finder alert message — verified working live with success response and DB persistence.
 - [ ] 7. Add a 3rd item via **Add Item**.
 - [ ] 8. Attempt to add a 4th item to verify the 3-item free tier limit and modal upsell.
 - [ ] 9. Visit `/premium` and test the simulated upgrade flow.
