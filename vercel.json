@@ -8,7 +8,7 @@
           "value": "lostlink-app-gold.vercel.app"
         }
       ],
-      "destination": "https://lostlink.vercel.app/$1",
+      "destination": "https://lostlink-ph.vercel.app/$1",
       "permanent": true
     }
   ],
