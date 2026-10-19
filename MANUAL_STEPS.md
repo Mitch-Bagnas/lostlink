@@ -31,88 +31,46 @@ Each entry provides:
 
 ---
 
-### Step 4: [BLOCKING for Prod] Deploy Backend to Render
-- **Why this is needed:** Render hosts our Node.js + Express API.
-- **Where to do it:** [Render Dashboard](https://dashboard.render.com/)
-  1. Click **New +** -> **Web Service**.
-  2. Connect your GitHub repository containing `LostLink`.
-  3. Fill in the service settings:
-     - **Name:** `lostlink-backend`
-     - **Region:** Singapore (or Oregon / closest to Supabase)
-     - **Root Directory:** `backend`
-     - **Runtime:** `Node`
-     - **Build Command:** `npm install && npm run build`
-     - **Start Command:** `npm start`
-     - **Plan:** Free
-  4. Scroll down to **Environment Variables** and add:
-     - `NODE_ENV`: `production`
-     - `PORT`: `10000` (Render's default)
-     - `DATABASE_URL`: *(Paste your Supabase Pooler URI from Step 2)*
-     - `JWT_SECRET`: *(Generate any random 32+ character string, e.g. run `openssl rand -hex 32` or use a long passphrase)*
-     - `FRONTEND_URL`: `https://placeholder.vercel.app` *(We will update this in Step 7 once Vercel gives us the domain)*
-     - `RESEND_API_KEY`: *(Optional, leave blank or add your Resend key if you have one)*
-     - `EMAIL_FROM`: `LostLink <onboarding@resend.dev>`
-  5. Click **Create Web Service**.
-  6. Wait for the build and deployment to complete. Render will display your live backend URL (e.g., `https://lostlink-backend.onrender.com`).
-  7. Test `/api/health` by opening `https://lostlink-backend.onrender.com/api/health` in your browser.
-- **What success looks like:**
-  Browser shows `{"status":"ok","database":"connected","timestamp":"..."}`.
-- **What to send back if it fails:**
-  Copy the error logs from the Render "Logs" tab.
+### Step 4: [COMPLETED] Deploy Backend to Render
+- **Status:** Completed. Service `lostlink` is live at **`https://lostlink-queh.onrender.com`**.
+- Database connection verified live: `{"status":"ok","database":"connected"}`.
 
 ---
 
-### Step 5: [BLOCKING for Prod] Insert Render Backend URL into `vercel.json` Rewrite
-- **Why this is needed:** Vercel reverse-proxies all `/api/*` traffic to the Render backend. This ensures the frontend and backend share the exact same origin in the browser's eyes, allowing `sameSite: 'lax'` secure cookies to work cleanly without third-party cookie blocking.
-- **Where to do it:** Open `vercel.json` in your code editor.
-- **Exact edit:**
-  Replace `https://lostlink-backend.onrender.com` in `vercel.json` with your actual Render URL from Step 4.
-  ```json
-  {
-    "rewrites": [
-      {
-        "source": "/api/:path*",
-        "destination": "https://YOUR-ACTUAL-RENDER-URL.onrender.com/api/:path*"
-      },
-      {
-        "source": "/(.*)",
-        "destination": "/index.html"
-      }
-    ]
-  }
-  ```
-- **Commit & Push:** Commit and push this change to your repository.
+### Step 5: [COMPLETED] Frontend & Backend Cross-Origin Configuration
+- **Status:** Completed. Backend configured with `credentials: true`, `sameSite: 'none'`, and `secure: true` for cross-origin authentication between Vercel and Render.
 
 ---
 
-### Step 6: [BLOCKING for Prod] Deploy Frontend to Vercel
-- **Why this is needed:** Vercel builds and hosts the React Vite SPA.
-- **Where to do it:** [Vercel Dashboard](https://vercel.com/dashboard)
-  1. Click **Add New...** -> **Project**.
-  2. Import your GitHub repository.
-  3. In the project setup screen:
-     - **Framework Preset:** `Vite`
-     - **Root Directory:** Click "Edit" and choose `frontend`
-     - **Build Command:** `npm run build`
-     - **Output Directory:** `dist`
-  4. Under **Environment Variables**, add:
-     - `VITE_API_URL`: `/api` *(Since Vercel reverse-proxies `/api` via `vercel.json`, leave this as `/api`)*
-  5. Click **Deploy**.
-  6. When deployment finishes, copy your live Vercel URL (e.g., `https://lostlink.vercel.app`).
-- **What success looks like:**
-  Vercel gives you a green checkmark and the live site loads the LostLink landing page.
+### Step 6: [COMPLETED] Deploy Frontend to Vercel
+- **Status:** Completed. App is live at **`https://lostlink-app-gold.vercel.app`**.
 
 ---
 
-### Step 7: [BLOCKING for Prod] Set `FRONTEND_URL` on Render and Redeploy
-- **Why this is needed:** Express CORS and cookie headers must match the exact Vercel frontend domain to prevent unauthorized origins from making requests.
-- **Where to do it:** [Render Dashboard](https://dashboard.render.com/) -> Select `lostlink-backend` -> **Environment** tab.
-- **Exact edit:**
-  Update `FRONTEND_URL` to match your Vercel URL from Step 6:
-  `FRONTEND_URL`: `https://lostlink.vercel.app` (do not include a trailing slash).
-  Click **Save Changes**. Render will automatically trigger a rolling redeploy.
-- **What success looks like:**
-  Render deploys successfully and the logs say `LostLink Backend running on port 10000`.
+### Step 7: [FINAL STEP] Connect Vercel & Render Environment Variables
+To connect the live frontend to the live backend:
+
+1. **In Render Dashboard ([dashboard.render.com](https://dashboard.render.com/)):**
+   - Click your `lostlink` Web Service $\rightarrow$ **Environment** tab.
+   - Update `FRONTEND_URL` to:
+     ```text
+     https://lostlink-app-gold.vercel.app
+     ```
+   - Click **Save Changes** (triggers a quick automatic restart).
+
+2. **In Vercel Dashboard ([vercel.com](https://vercel.com/)):**
+   - Click `lostlink-app` $\rightarrow$ **Settings** $\rightarrow$ **Environment Variables**.
+   - Edit `VITE_API_URL` (or add it if missing):
+     - **Key:** `VITE_API_URL`
+     - **Value:**
+       ```text
+       https://lostlink-queh.onrender.com/api
+       ```
+     - Make sure **Config** is selected (not Secret).
+     - Click **Save**.
+   - Go to the **Deployments** tab $\rightarrow$ click the **`...`** (three dots) on the top deployment $\rightarrow$ click **Redeploy**.
+
+---
 
 ---
 
