@@ -12,7 +12,7 @@ function setAuthCookie(res: Response, token: string) {
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
     secure: env.NODE_ENV === 'production',
-    sameSite: 'lax', // Standard lax mode paired with Vercel API rewrite proxy
+    sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
     maxAge: SEVEN_DAYS_MS,
   });
 }
@@ -21,7 +21,7 @@ function clearAuthCookie(res: Response) {
   res.clearCookie(COOKIE_NAME, {
     httpOnly: true,
     secure: env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
   });
 }
 
