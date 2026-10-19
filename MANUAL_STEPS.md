@@ -70,8 +70,8 @@ Each entry provides:
 - [x] 3. Dashboard loads with seeded items ("University Student ID", "Blue Samsonite Backpack").
 - [x] 4. Click **Manage & QR** on an item to inspect QR code and test status toggle (Safe <-> Lost).
 - [x] 5. Public QR URL (`/found/<qr_id>`) verified live with HTTP 200 — zero owner info exposed.
-- [x] 6. Send test finder alert message — verified working live with success response and DB persistence.
-- [ ] 7. Add a 3rd item via **Add Item**.
+- [x] 6. Send test finder alert message ("Left at the court") from mobile phone scanner — verified working live with real-time UI notification update.
+- [ ] 7. Add a 3rd item via **Add Item** to fill remaining free slot.
 - [ ] 8. Attempt to add a 4th item to verify the 3-item free tier limit and modal upsell.
 - [ ] 9. Visit `/premium` and test the simulated upgrade flow.
 - [ ] 10. Click Log Out to verify cookie cleanup and redirect to landing/login.
