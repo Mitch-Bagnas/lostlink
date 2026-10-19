@@ -18,6 +18,7 @@ export const Auth: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -40,6 +41,9 @@ export const Auth: React.FC = () => {
       } else {
         if (!name.trim()) {
           throw new Error('Please provide your name.');
+        }
+        if (password !== confirmPassword) {
+          throw new Error('Passwords do not match. Please check for typos.');
         }
         await signup(name, email, password);
         showToast('success', 'Account created successfully! Welcome to LostLink.');
@@ -89,6 +93,7 @@ export const Auth: React.FC = () => {
             onClick={() => {
               setActiveTab('login');
               setErrorMsg('');
+              setConfirmPassword('');
             }}
             className={`flex-1 py-2 text-xs font-bold rounded-full transition-all ${
               activeTab === 'login' ? 'bg-ink text-white shadow-sm' : 'text-muted hover:text-ink'
@@ -202,6 +207,31 @@ export const Auth: React.FC = () => {
               />
             </div>
           </div>
+
+          {activeTab === 'signup' && (
+            <div className="space-y-1">
+              <label className="block text-xs font-bold text-ink">Confirm Password</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-muted absolute left-3.5 top-3" />
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter your password"
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-2xl border text-sm text-ink focus:bg-white focus:outline-none focus:ring-2 ${
+                    confirmPassword && confirmPassword !== password
+                      ? 'border-lost bg-lost-light/30 focus:ring-lost'
+                      : 'border-line bg-paper focus:ring-sky'
+                  }`}
+                />
+              </div>
+              {confirmPassword && confirmPassword !== password && (
+                <p className="text-[11px] text-lost font-medium pl-1">Passwords do not match</p>
+              )}
+            </div>
+          )}
 
           <Button
             type="submit"
