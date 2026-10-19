@@ -96,3 +96,16 @@ Each entry provides:
 - [x] 7. Cascade user deletion cleanly purges user, items, and finder notifications from the database.
 - [x] 8. Audit logging verified: every action tracked with `admin_email` snapshot and ZERO leaked passwords/secrets. Public `GET /api/found/:qrId` verified to leak ZERO owner data.
 - [x] 9. Production build `npm run build` succeeds on backend and frontend (0 errors). Full-page responsive screenshots captured at 375px and 1366px for `/admin`, `/admin/users`, and `/admin/users/:id`.
+
+---
+
+### Step 13: [ACTION REQUIRED] Trigger Render Backend Redeployment
+- **Why this is needed:** While Vercel has built the new frontend bundle, Render is still serving the previous backend deployment from before migration 002. Consequently, the live `/api/auth/login` on Render still returns the old user object without the `role` property (`user.role === undefined`), which hides the navbar Admin link and blocks `/admin`.
+- **Where to do it:** [Render Dashboard](https://dashboard.render.com) -> Select your Web Service (`lostlink-app` / `lostlink-backend`).
+- **Exact Action:** Click the **Manual Deploy** button (top right) -> Select **Clear build cache & deploy**.
+- **What success looks like:**
+  Once Render finishes deploying (Status: `Live`):
+  1. Open [lostlink-app-gold.vercel.app/auth](https://lostlink-app-gold.vercel.app/auth).
+  2. Log in with `admin@lostlink.ph` and `admin123`.
+  3. The **Admin PANEL** link will appear in the top navbar.
+  4. Clicking it will open the full Admin Panel at `/admin`.
