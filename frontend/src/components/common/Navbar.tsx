@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from './Button';
-import { Shield, QrCode, PlusCircle, Crown, Settings, Menu, X, LogOut, LayoutDashboard, ShieldCheck } from 'lucide-react';
+import { Shield, QrCode, PlusCircle, Crown, Settings, Menu, X, LogOut, LayoutDashboard, ShieldCheck, Tag } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -79,6 +79,14 @@ export const Navbar: React.FC = () => {
                   )}
                 </Link>
 
+                <a
+                  href="/#tags"
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium text-muted hover:text-ink hover:bg-paper transition-colors"
+                >
+                  <Tag className="w-3.5 h-3.5 text-sky" />
+                  <span>Smart Tags</span>
+                </a>
+
                 <Link
                   to="/settings"
                   className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium transition-colors ${
@@ -115,6 +123,13 @@ export const Navbar: React.FC = () => {
                   className="px-3.5 py-2 rounded-full text-sm font-medium text-muted hover:text-ink hover:bg-paper transition-colors"
                 >
                   How it Works
+                </a>
+                <a
+                  href="/#tags"
+                  className="px-3.5 py-2 rounded-full text-sm font-medium text-muted hover:text-ink hover:bg-paper transition-colors flex items-center gap-1.5"
+                >
+                  <Tag className="w-3.5 h-3.5 text-sky" />
+                  <span>Physical Tags (₱150)</span>
                 </a>
                 <a
                   href="/#pricing"
@@ -259,6 +274,13 @@ export const Navbar: React.FC = () => {
                 className="block px-3.5 py-2.5 rounded-2xl text-sm font-medium text-ink hover:bg-paper"
               >
                 How it Works
+              </a>
+              <a
+                href="/#tags"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3.5 py-2.5 rounded-2xl text-sm font-bold text-sky hover:bg-paper"
+              >
+                🏷️ Physical Eco-Tags (₱150)
               </a>
               <a
                 href="/#pricing"

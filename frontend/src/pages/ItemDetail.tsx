@@ -11,6 +11,7 @@ import { Modal } from '../components/common/Modal';
 import { Spinner } from '../components/common/Spinner';
 import { QRModal } from '../components/items/QRModal';
 import { PrintableSheet } from '../components/items/PrintableSheet';
+import { OrderTagsModal } from '../components/items/OrderTagsModal';
 import { 
   ArrowLeft, 
   ShieldCheck, 
@@ -26,7 +27,8 @@ import {
   PhoneCall,
   Clock,
   Shield,
-  Edit2
+  Edit2,
+  ShoppingBag
 } from 'lucide-react';
 
 export const ItemDetail: React.FC = () => {
@@ -43,6 +45,7 @@ export const ItemDetail: React.FC = () => {
   // Modals state
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [isPrintOpen, setIsPrintOpen] = useState(false);
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isTogglingStatus, setIsTogglingStatus] = useState(false);
@@ -406,6 +409,25 @@ export const ItemDetail: React.FC = () => {
             <div className="p-3 bg-paper rounded-2xl border border-line text-[11px] text-muted leading-relaxed">
               💡 <strong>Tip:</strong> Print on sticker paper or slide a wallet tag inside your cardholder so finders can reach you immediately.
             </div>
+
+            {/* Physical Tags Promo Card */}
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-paper to-sky-light/40 border border-sky/30 text-left space-y-2.5">
+              <div className="flex items-center gap-2 text-ink">
+                <ShoppingBag className="w-4 h-4 text-sky" />
+                <span className="text-xs font-bold">Official Weatherproof Tags</span>
+              </div>
+              <p className="text-[11px] text-muted leading-relaxed">
+                Want a dishwasher-safe, scratch-resistant rPET sticker or acrylic keytag for this {item.name}?
+              </p>
+              <Button
+                variant="sky"
+                size="sm"
+                className="w-full text-xs font-bold shadow-sm"
+                onClick={() => setIsOrderModalOpen(true)}
+              >
+                Order Physical Tags (₱150)
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -450,6 +472,13 @@ export const ItemDetail: React.FC = () => {
         itemName={item.name}
         category={item.category}
         qrId={item.qr_id}
+      />
+
+      {/* Order Tags Modal */}
+      <OrderTagsModal
+        isOpen={isOrderModalOpen}
+        onClose={() => setIsOrderModalOpen(false)}
+        defaultPackage="stickers"
       />
     </div>
   );

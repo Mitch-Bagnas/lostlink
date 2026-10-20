@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/common/Button';
+import { OrderTagsModal } from '../components/items/OrderTagsModal';
 import { 
   Shield, 
   QrCode, 
@@ -13,10 +14,22 @@ import {
   ShieldCheck, 
   AlertCircle,
   HelpCircle,
-  BellRing
+  BellRing,
+  Package,
+  Droplet,
+  Leaf,
+  ZapOff,
+  ShoppingBag
 } from 'lucide-react';
 
 export const Landing: React.FC = () => {
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [selectedPackForModal, setSelectedPackForModal] = useState<'stickers' | 'keychain' | 'bundle'>('bundle');
+
+  const handleOpenOrderModal = (pkg: 'stickers' | 'keychain' | 'bundle') => {
+    setSelectedPackForModal(pkg);
+    setIsOrderModalOpen(true);
+  };
   return (
     <div className="space-y-24 py-8 sm:py-16">
       {/* 1. Hero Section */}
@@ -169,7 +182,199 @@ export const Landing: React.FC = () => {
         </div>
       </section>
 
-      {/* 4. Free vs Premium Comparison */}
+      {/* 4. Physical Smart Tags & Stickers (Hardware & Merch) */}
+      <section id="tags" className="max-w-5xl mx-auto px-4 sm:px-6 space-y-12">
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-safe-light text-safe text-xs font-bold uppercase tracking-wider">
+            <Leaf className="w-3.5 h-3.5" />
+            <span>Sustainable Physical Gear</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-ink tracking-tight">
+            Official Weatherproof Eco-Smart Tags
+          </h2>
+          <p className="text-sm text-muted max-w-xl mx-auto">
+            Need industrial-grade protection for tumblers, laptops, or backpacks? Order ready-to-stick recycled ocean plastic (rPET) tags, or download and print your own at home for free.
+          </p>
+        </div>
+
+        {/* Feature Badges */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-4 bg-white rounded-2xl border border-line shadow-soft flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-safe-light text-safe flex items-center justify-center shrink-0">
+              <Leaf className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-ink">100% rPET</h4>
+              <p className="text-[11px] text-muted">Recycled Ocean Plastic</p>
+            </div>
+          </div>
+
+          <div className="p-4 bg-white rounded-2xl border border-line shadow-soft flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-sky-light text-sky flex items-center justify-center shrink-0">
+              <ZapOff className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-ink">Zero Batteries</h4>
+              <p className="text-[11px] text-muted">No Toxic Chemical Waste</p>
+            </div>
+          </div>
+
+          <div className="p-4 bg-white rounded-2xl border border-line shadow-soft flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-sky-light text-sky flex items-center justify-center shrink-0">
+              <Droplet className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-ink">Dishwasher-Safe</h4>
+              <p className="text-[11px] text-muted">Water, Heat & UV Proof</p>
+            </div>
+          </div>
+
+          <div className="p-4 bg-white rounded-2xl border border-line shadow-soft flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-paper text-ink flex items-center justify-center shrink-0">
+              <Package className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-ink">Zero-App Scan</h4>
+              <p className="text-[11px] text-muted">Scannable by Any Phone</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Merchandise Product Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+          {/* Card 1: Stickers Pack */}
+          <div className="rounded-3xl bg-white border border-line p-6 shadow-soft flex flex-col justify-between space-y-5 hover:shadow-md transition-shadow">
+            <div className="space-y-4">
+              <div className="w-full h-36 rounded-2xl bg-paper border border-line/60 flex flex-col items-center justify-center p-4 text-center space-y-2">
+                <div className="w-14 h-14 rounded-2xl bg-white shadow-soft flex items-center justify-center border border-line">
+                  <QrCode className="w-8 h-8 text-ink" />
+                </div>
+                <span className="text-[11px] font-bold text-ink uppercase tracking-wider">3x rPET Adhesive Stickers</span>
+              </div>
+
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-sky bg-sky-light px-2 py-0.5 rounded-full">
+                  Laptops & Tumblers
+                </span>
+                <h4 className="text-lg font-bold text-ink mt-2">Eco-Smart Sticker 3-Pack</h4>
+                <p className="text-xs text-muted mt-1 leading-relaxed">
+                  Heavy-duty matte vinyl stickers with scratch-resistant coating and residue-free adhesive.
+                </p>
+              </div>
+
+              <div className="pt-2 text-2xl font-black text-ink">
+                ₱150 <span className="text-xs text-muted font-normal">/ 3-pack (₱50 each)</span>
+              </div>
+            </div>
+
+            <Button
+              variant="secondary"
+              size="md"
+              className="w-full font-bold"
+              onClick={() => handleOpenOrderModal('stickers')}
+            >
+              <ShoppingBag className="w-4 h-4 mr-2 text-sky" />
+              Order Sticker Pack
+            </Button>
+          </div>
+
+          {/* Card 2: Student Complete Bundle */}
+          <div className="relative rounded-3xl bg-ink text-white border-2 border-sky p-6 shadow-lift flex flex-col justify-between space-y-5">
+            <div className="absolute top-4 right-5">
+              <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-sky text-white uppercase tracking-wider">
+                BEST VALUE
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              <div className="w-full h-36 rounded-2xl bg-white/5 border border-white/10 flex flex-col items-center justify-center p-4 text-center space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-12 h-12 rounded-2xl bg-white text-ink flex items-center justify-center">
+                    <QrCode className="w-7 h-7" />
+                  </div>
+                  <div className="w-10 h-10 rounded-2xl bg-sky text-white flex items-center justify-center font-black text-xs">
+                    TAG
+                  </div>
+                </div>
+                <span className="text-[11px] font-bold text-sky uppercase tracking-wider">2x Stickers + 1x Keychain Tag</span>
+              </div>
+
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full">
+                  Complete Campus Kit
+                </span>
+                <h4 className="text-lg font-bold text-white mt-2">Student Campus Bundle</h4>
+                <p className="text-xs text-white/70 mt-1 leading-relaxed">
+                  Includes 2x waterproof stickers for your tumbler & laptop, plus 1x heavy-duty acrylic keytag for your bag.
+                </p>
+              </div>
+
+              <div className="pt-2">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-white">₱199</span>
+                  <span className="text-xs text-white/50 line-through">₱249</span>
+                  <span className="text-xs text-safe font-bold">Save ₱50</span>
+                </div>
+              </div>
+            </div>
+
+            <Button
+              variant="sky"
+              size="md"
+              className="w-full font-bold shadow-md"
+              onClick={() => handleOpenOrderModal('bundle')}
+            >
+              <ShoppingBag className="w-4 h-4 mr-2" />
+              Order Campus Bundle
+            </Button>
+          </div>
+
+          {/* Card 3: Keychain Tag */}
+          <div className="rounded-3xl bg-white border border-line p-6 shadow-soft flex flex-col justify-between space-y-5 hover:shadow-md transition-shadow">
+            <div className="space-y-4">
+              <div className="w-full h-36 rounded-2xl bg-paper border border-line/60 flex flex-col items-center justify-center p-4 text-center space-y-2">
+                <div className="w-14 h-14 rounded-2xl bg-ink text-white shadow-soft flex items-center justify-center border border-line">
+                  <ShieldCheck className="w-8 h-8 text-sky" />
+                </div>
+                <span className="text-[11px] font-bold text-ink uppercase tracking-wider">Heavy-Duty Keytag</span>
+              </div>
+
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted bg-paper px-2 py-0.5 rounded-full">
+                  Keys & Luggage
+                </span>
+                <h4 className="text-lg font-bold text-ink mt-2">Acrylic Keychain Tag</h4>
+                <p className="text-xs text-muted mt-1 leading-relaxed">
+                  Laser-cut 2.5mm recycled acrylic with reinforced 4mm brass eyelet and stainless steel ring.
+                </p>
+              </div>
+
+              <div className="pt-2 text-2xl font-black text-ink">
+                ₱99 <span className="text-xs text-muted font-normal">/ piece</span>
+              </div>
+            </div>
+
+            <Button
+              variant="secondary"
+              size="md"
+              className="w-full font-bold"
+              onClick={() => handleOpenOrderModal('keychain')}
+            >
+              <ShoppingBag className="w-4 h-4 mr-2 text-sky" />
+              Order Keychain Tag
+            </Button>
+          </div>
+        </div>
+
+        <div className="p-4 bg-paper rounded-2xl border border-line flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted">
+          <span>💡 Don't want to buy physical tags? You can always download the high-res QR code and print it for free!</span>
+          <Link to="/auth?tab=signup" className="text-sky font-bold hover:underline shrink-0 flex items-center gap-1">
+            Sign up for free generator <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      </section>
+
+      {/* 5. Free vs Premium Comparison */}
       <section id="pricing" className="max-w-5xl mx-auto px-4 sm:px-6 space-y-12">
         <div className="text-center space-y-3">
           <h2 className="text-xs uppercase font-extrabold tracking-widest text-sky">Transparent Plans</h2>
@@ -299,6 +504,13 @@ export const Landing: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Order Tags Modal */}
+      <OrderTagsModal
+        isOpen={isOrderModalOpen}
+        onClose={() => setIsOrderModalOpen(false)}
+        defaultPackage={selectedPackForModal}
+      />
     </div>
   );
 };
