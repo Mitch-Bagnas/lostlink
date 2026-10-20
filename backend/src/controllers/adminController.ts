@@ -728,6 +728,58 @@ export async function getNotifications(req: AuthenticatedRequest, res: Response)
 }
 
 /**
+ * DELETE /api/admin/notifications/:id
+ * Removes inappropriate, abusive, or spam finder messages.
+ */
+export async function deleteNotification(req: AuthenticatedRequest, res: Response): Promise<void> {
+  const notificationId = req.params.id;
+  const adminId = req.user!.id;
+  const adminEmail = req.user!.email;
+
+  try {
+    const notifRes = await query(
+      `SELECT n.id, n.finder_message, n.finder_contact, i.name as item_name, u.email as owner_email
+       FROM notifications n
+       JOIN items i ON n.item_id = i.id
+       JOIN users u ON i.owner_id = u.id
+       WHERE n.id = $1`,
+      [notificationId]
+    );
+
+    if (notifRes.rowCount === 0) {
+      res.status(404).json({ error: 'Notification message not found.' });
+      return;
+    }
+
+    const notif = notifRes.rows[0];
+
+    await query('DELETE FROM notifications WHERE id = $1', [notificationId]);
+
+    await recordAuditLog({
+      adminId,
+      adminEmail,
+      action: 'notification.delete',
+      targetType: 'notification',
+      targetId: notificationId,
+      details: {
+        itemName: notif.item_name,
+        ownerEmail: notif.owner_email,
+        finderMessageSnippet: notif.finder_message ? notif.finder_message.slice(0, 100) : null,
+        reason: 'Abusive or inappropriate finder message removed by admin',
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Inappropriate message deleted successfully.',
+    });
+  } catch (error) {
+    console.error('Admin deleteNotification error:', error);
+    res.status(500).json({ error: 'Failed to delete notification message.' });
+  }
+}
+
+/**
  * GET /api/admin/audit-logs
  * Filterable administrative audit trail.
  */

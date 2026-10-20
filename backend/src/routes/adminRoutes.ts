@@ -23,6 +23,7 @@ import {
   getItems,
   deleteItem,
   getNotifications,
+  deleteNotification,
   getAuditLogs,
 } from '../controllers/adminController';
 
@@ -49,6 +50,7 @@ router.delete('/items/:id', deleteItem);
 
 // 4. Abuse review for scanner notifications
 router.get('/notifications', validate(adminNotificationQuerySchema, 'query'), getNotifications);
+router.delete('/notifications/:id', deleteNotification);
 
 // 5. Audit trail
 router.get('/audit-logs', validate(adminAuditLogQuerySchema, 'query'), getAuditLogs);
