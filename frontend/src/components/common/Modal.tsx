@@ -48,10 +48,10 @@ export const Modal: React.FC<ModalProps> = ({
       aria-modal="true"
     >
       <div
-        className={`relative w-full ${maxWidthClasses[maxWidth]} bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-line animate-scale-up`}
+        className={`relative w-full ${maxWidthClasses[maxWidth]} max-h-[90vh] flex flex-col bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-line animate-scale-up`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between pb-4 border-b border-line mb-5">
+        <div className="flex items-center justify-between pb-4 border-b border-line mb-4 shrink-0">
           {title && <h3 className="text-xl font-bold text-ink">{title}</h3>}
           <button
             onClick={onClose}
@@ -61,7 +61,9 @@ export const Modal: React.FC<ModalProps> = ({
             <X className="w-5 h-5" />
           </button>
         </div>
-        {children}
+        <div className="overflow-y-auto flex-1 -mr-2 pr-2">
+          {children}
+        </div>
       </div>
     </div>
   );

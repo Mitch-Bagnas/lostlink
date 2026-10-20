@@ -87,7 +87,7 @@ export const OrderTagsModal: React.FC<OrderTagsModalProps> = ({
   return (
     <Modal isOpen={isOpen} onClose={handleResetAndClose} title="Order Official LostLink Smart Tags" maxWidth="lg">
       {!isSubmitted ? (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Sustainability & Quality Highlights */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
             <div className="p-2.5 bg-paper rounded-xl border border-line flex flex-col items-center">
@@ -239,7 +239,7 @@ export const OrderTagsModal: React.FC<OrderTagsModalProps> = ({
           </div>
 
           {/* Pricing Summary & Submit */}
-          <div className="pt-3 border-t border-line flex items-center justify-between">
+          <div className="sticky bottom-0 bg-white pt-3 pb-1 border-t border-line flex items-center justify-between z-10">
             <div>
               <span className="text-[10px] uppercase font-bold text-muted block">Order Total</span>
               <span className="text-xl font-black text-ink">₱{totalPrice}</span>
